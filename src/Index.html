@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <style>
+       body {background-color: lightgray;} 
+       h2 {color:gray; font-size:20px;}
+       .content {margin: 20px 0; padding: 15px; border: 1px solid darkgray; border-radius: 5px; background-color: white;}
+       .status { font-size: 20px; }
+       .status .label {font-size: 20px}
+       footer {color:gray; text-align: center;}
+       footer a {color:gray;}
+       .hidden {display:none;}
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="https://use.fontawesome.com/releases/v5.0.8/js/solid.js" integrity="sha384-+Ga2s7YBbhOD6nie0DzrZpJes+b2K1xkpKxTFFcx59QmVPaSA8c7pycsNaFwUK6l" crossorigin="anonymous"></script>
+    <script src="https://use.fontawesome.com/releases/v5.0.8/js/fontawesome.js" integrity="sha384-7ox8Q2yzO/uWircfojVuCQOZl+ZZBg2D2J5nkpLqzH1HY0C1dHlTKIbpRz/LG23c" crossorigin="anonymous"></script>
+    <script>
+      
+      $(function(){
+        google.script.run
+          .withSuccessHandler(init)
+          .isBorrowed();
+          
+        $('#submit', form).click(submit);      
+      });
+      
+      function init(isBorrowed) {
+        $('#loading').hide();
+        setStatus(isBorrowed);
+        
+        var form = $('#form');
+        $('.action', form).text(isBorrowed ? 'vrácení' : 'vypůjčení');
+        $('#direct', form).val(isBorrowed ? 'return' : 'borrow');
+        
+        var time = new Date();
+        time.setSeconds(0);
+        time.setMilliseconds(0);
+        $('#datetime', form).val(dateToLocalInput(time));
+        form.removeClass('hidden');
+      }
+      
+      function setStatus(isBorrowed) {
+        var status = $('#status');
+        var text;
+        if(isBorrowed) {
+          text = '<span class="label label-warning"><i class="fas fa-exclamation-triangle"></i></span> Klíč je vypůjčen';
+        }
+        else {
+          text = '<span class="label label-success"><i class="fas fa-check"></i></span> Klíč není vypůjčen';
+        }
+        
+        status.html(text).removeClass('hidden');
+      }
+      
+      function submit() {
+        var form = $('#form');
+        var val = $('#datetime', form).val();
+        
+        if(!val) {
+          alert('Datum musí být vyplněn!');
+          return false;
+        }
+        
+        var date = localInputToDate(val).toISOString();
+        
+        var direct = $('#direct', form).val();
+        
+        google.script.run
+          .withSuccessHandler(saved)
+          .addNewDate(date, direct);
+      }
+      
+      function saved(isBorrowed) {
+        init(isBorrowed);
+      }
+      
+      function dateToLocalInput(date) {
+        var newDate = new Date(date);
+        newDate.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+        var iso = newDate.toISOString();
+        return iso.substring(0,iso.length-1);
+      }
+      
+      function localInputToDate(input) {
+        var date = new Date();
+        var newDate = new Date(input + 'Z');
+        newDate.setMinutes(newDate.getMinutes() + date.getTimezoneOffset());
+        return newDate;
+      }
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>DEPO 2015</h1>
+      <h2>využívání coworkingu</h2>
+      <div class="content">
+        <div id="loading" class="status">
+          <span class="label label-default"><i class="fas fa-hourglass-half"></i></span> Načítám…
+        </div>
+        <div id="status" class="status hidden"></div>
+      </div>
+      <div id="form" class="hidden">
+        <h2>Zapsat <span class="action"></span></h2>
+          <div class="form-group">
+            <label for="datetime">Datum a čas <span class="action"></span></label>
+            <input id="datetime" class="form-control" type="datetime-local" required>
+          </div>
+          <button id="submit" type="submit" class="btn btn-primary">Zapsat <span class="action"></span></button>
+          <input id="direct" type="hidden" value="">
+      </div>
+      <footer>
+        Provozuje: Jakub Bouček, <a href="mailto:pan@jakubboucek.cz">pan@jakubboucek.cz</a>
+      </footer>
+    </div>
+  </body>
+</html>
+
+
